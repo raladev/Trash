@@ -3,10 +3,9 @@ import asyncio
 import socket
 import time
 
-#reconnect in alone function
-async def test():
-    while True:
 
+async def standalone_reconnect():
+    while True:
         try:
             async with websockets.connect('ws://echo.websocket.org/') as ws:
                 while True:
@@ -16,7 +15,6 @@ async def test():
                         await asyncio.sleep(1)
                     except websockets.ConnectionClosedError:
                         try:
-                          #  ws.
                             pong = await ws.ping()
                             await asyncio.wait_for(pong, timeout=2)
                             print('Ping OK')
@@ -33,9 +31,11 @@ async def test():
 
 
 
-# 2 tasks
-# Reconnect works automatically for short time, but ws.send sends all unsended messages;
-async def test2_writer(ws):
+
+
+
+
+async def no_reconnect_writer(ws):
     while True:
         try:
             while True:
@@ -45,7 +45,7 @@ async def test2_writer(ws):
             print('im here')
             await asyncio.sleep(2)
 
-async def test2_listener(ws):
+async def no_reconnect_listener(ws):
     while True:
         try:
             while True:
@@ -53,11 +53,10 @@ async def test2_listener(ws):
         except:
             await asyncio.sleep(2)
 
-
-async def test2_task_manager():
+async def no_recconect_task_manager():
     ws = await websockets.connect('ws://echo.websocket.org/')
-    task1 = asyncio.create_task(test2_listener(ws))
-    task2 = asyncio.create_task(test2_writer(ws))
+    task1 = asyncio.create_task(no_reconnect_listener(ws))
+    task2 = asyncio.create_task(no_reconnect_writer(ws))
     await asyncio.gather(task1, task2)
 
 
@@ -66,7 +65,7 @@ async def test2_task_manager():
 
 
 # Need to send new ws to writer and listener
-async def test3_connection_manager(ws):
+async def connection_manager(ws):
     while True:
         try:
             pong = await ws.ping()
@@ -80,14 +79,14 @@ async def test3_connection_manager(ws):
             print('No connection?')
             try:
                 print('hell')
-                ws = await websockets.connect('ws://echo.websocket.org/')
+                ws = websockets.connect('ws://echo.websocket.org/')
                 #await ws.send('hell')
                 #return ws
             except socket.gaierror:
                 print('its , here we go again')
                 await asyncio.sleep(2)
 
-async def test3_writer(ws):
+async def reconnect_writer(ws):
     while True:
         try:
             while True:
@@ -96,10 +95,10 @@ async def test3_writer(ws):
         except:
             print('im here')
             await asyncio.sleep(1)
-            ws = test3_connection_manager(ws)
+            await connection_manager(ws)
 
 
-async def test3_listener(ws):
+async def reconnect_listener(ws):
     while True:
         try:
             while True:
@@ -108,21 +107,108 @@ async def test3_listener(ws):
             await asyncio.sleep(2)
 
 
-async def test3_task_manager():
+async def reconnect_task_manager():
     ws = await websockets.connect('ws://echo.websocket.org/')
-    task1 = asyncio.create_task(test3_connection_manager(ws))
-    task2 = asyncio.create_task(test3_listener(ws))
-    task3 = asyncio.create_task(test3_writer(ws))
-    await asyncio.gather(task1, task2, task3)
+ #   task1 = asyncio.create_task(connection_manager(ws))
+    task2 = asyncio.create_task(reconnect_listener(ws))
+    task3 = asyncio.create_task(reconnect_writer(ws))
+    await asyncio.gather(task2, task3)
 
 
-if __name__ == "__main__":
-    # for test()
-    # asyncio.get_event_loop().run_until_complete(test())
 
-    # for test2()
-    # asyncio.run(test2_task_manager())
 
-    # for test3()
-    asyncio.run(test3_task_manager())
+
+
+
+#it works!
+class TheStongestSocketInTheWorld:
+
+    def __init__(self,message_handler=None, connection_url='ws://echo.websocket.org/'):
+        self._message_handler = message_handler
+        self.ws = None
+        self._url = connection_url
+
+    async def listen(self):
+        while True:
+            try:
+                print(await self.ws.recv())
+            except websockets.ConnectionClosedError as e:
+                print('ConnectionClosedError Exception in listen: {}'.format(e))
+                await asyncio.sleep(2)
+            except Exception as e:
+                print('Unexpected Exception in listen: {}'.format(e))
+                await asyncio.sleep(2)
+
+    async def send(self, msg='hell-send'):
+        while True:
+            try:
+                await self.ws.send(msg)
+                await asyncio.sleep(2)
+            except websockets.ConnectionClosedError as e:
+                print('ConnectionClosedError Exception in send: {}'.format(e))
+                await asyncio.sleep(2)
+            except Exception as e:
+                print('Unexpected Exception in send: {}'.format(e))
+                await asyncio.sleep(2)
+
+    async def reconnect_manager(self):
+        while True:
+            try:
+                pong = await self.ws.ping()
+                await asyncio.wait_for(pong, timeout=2)
+                print('Ping OK')
+                await asyncio.sleep(2)
+            except asyncio.TimeoutError:
+                print('No pong')
+                await asyncio.sleep(2)
+            except:
+                print('Connection troubles: {}')
+                self.ws.close_connection()
+                await self.connect()
+
+    async def connect(self):
+       while True:
+        try:
+            self.ws = await websockets.connect(self._url)
+            break
+        except TimeoutError as e:
+            print('Cant connect, need more time: {}'.format(e))
+            await asyncio.sleep(3)
+        except socket.gaierror as e:
+            print('Cant connect, need more time: gai - {}'.format(e))
+            await asyncio.sleep(3)
+
+    def _ping(self):
+        pass
+
+async def test4_task_manager():
+    ws = TheStongestSocketInTheWorld(None)
+    await ws.connect()
+    task1 = asyncio.create_task(ws.reconnect_manager())
+    task2 = asyncio.create_task(ws.listen())
+    task3 = asyncio.create_task(ws.send())
+    ttl = await asyncio.gather(task1, task2, task3)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
