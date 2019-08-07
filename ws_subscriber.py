@@ -1,6 +1,7 @@
 import websockets
 import asyncio
 import socket
+import time
 
 #it works!
 class WsSubscriber:
@@ -24,6 +25,18 @@ class WsSubscriber:
                 await asyncio.sleep(2)
 
     async def send(self, msg='hell-send'):
+            try:
+                await self.ws.send(msg)
+                await asyncio.sleep(2)
+                return True
+            except websockets.ConnectionClosedError as e:
+                print('ConnectionClosedError Exception in send: {}'.format(e))
+                return False
+            except Exception as e:
+                print('Unexpected Exception in send: {}'.format(e))
+                return False
+
+    async def inf_send(self, msg='hell-send'):
         while True:
             try:
                 await self.ws.send(msg)
@@ -54,6 +67,7 @@ class WsSubscriber:
        while True:
         try:
             self.ws = await websockets.connect(self._url)
+            #some init messages
             break
         except TimeoutError as e:
             print('Cant connect, need more time: {}'.format(e))
@@ -62,21 +76,49 @@ class WsSubscriber:
             print('Cant connect, need more time: gai - {}'.format(e))
             await asyncio.sleep(3)
 
-    def subscribe(self):
+    def set_listener(self):
         self._reconnect_future = asyncio.ensure_future(self.reconnect_manager(), loop=self._loop)
         self._listen_future = asyncio.ensure_future(self.listen(), loop=self._loop)
-        self._listen_future = asyncio.ensure_future(self.send(), loop=self._loop)
+
+    def set_listener_with_inf_send(self):
+        self._reconnect_future = asyncio.ensure_future(self.reconnect_manager(), loop=self._loop)
+        self._listen_future = asyncio.ensure_future(self.listen(), loop=self._loop)
+        self._listen_future = asyncio.ensure_future(self.inf_send(), loop=self._loop)
 
     def _ping(self):
         pass
 
-#Works only 10 seconds
-async def main(loop):
+
+#async def main(loop):
+#    ws = WsSubscriber(loop=loop)
+#    await ws.connect()
+#    ws.set_listener_with_inf_send()
+#    await asyncio.sleep(10)
+
+
+#works only 10 seconds
+#if __name__ == "__main__":
+#    loop = asyncio.get_event_loop()
+#    loop.run_until_complete(main(loop))
+
+
+async def second_main(loop):
     ws = WsSubscriber(loop=loop)
     await ws.connect()
-    ws.subscribe()
-    await asyncio.sleep(10)
+    ws.set_listener()
+    await ws.send('heeyea')
+    await ws.send('heeyea2')
+    await ws.send('heeyea3')
+    await ws.send('heeyea4')
+    await ws.send('heeyea5')
+    print('End of main')
+
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(main(loop))
+    #waits end of the second_main()
+    loop.run_until_complete(second_main(loop))
+    print('Loop stopped')
+    loop.run_until_complete(second_main(loop))
+    print('Loop stopped again')
+
