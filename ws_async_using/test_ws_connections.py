@@ -1,9 +1,8 @@
 import asyncio
-import pytest
-from connect import standalone_reconnect
-from connect import no_recconect_task_manager
-from connect import reconnect_task_manager
-from connect import test4_task_manager
+from ws_async_using.connect import standalone_reconnect
+from ws_async_using.connect import no_recconect_task_manager
+from ws_async_using.connect import reconnect_task_manager
+from ws_async_using.connect import test4_task_manager
 #reconnect works
 def test_standalone_reconnect():
     asyncio.get_event_loop().run_until_complete(standalone_reconnect())

@@ -9,6 +9,7 @@ verify_ssl = true
 websocket = "*"
 websockets = "*"
 pytest = "*"
+pyyaml = "*"
 
 [requires]
 python_version = "3.7"
