@@ -123,7 +123,7 @@ async def reconnect_task_manager():
 #it works!
 class TheStongestSocketInTheWorld:
 
-    def __init__(self,message_handler=None, connection_url='ws://echo.websocket.org/'):
+    def __init__(self, message_handler=None, connection_url='ws://echo.websocket.org/'):
         self._message_handler = message_handler
         self.ws = None
         self._url = connection_url

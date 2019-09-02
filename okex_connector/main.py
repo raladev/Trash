@@ -1,9 +1,11 @@
 from okex_connector.okexWs import OkexWsSubscriber
+from okex_connector.okexMessages import Msg
 import asyncio
 
 async def main(loop):
-    ws = OkexWsSubscriber(loop=loop)
-    await ws.connect()
+    okexWs = OkexWsSubscriber(loop=loop)
+    await okexWs.connect(init_msg=Msg.build_login_msg())
+    okexWs.subscribe(Msg.Spot_Orderbook5_ETHUSD)
     await asyncio.sleep(6)
 
 
