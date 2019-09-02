@@ -6,8 +6,15 @@ async def main(loop):
     okexWs = OkexWsSubscriber(loop=loop)
     await okexWs.connect(init_msg=Msg.build_login_msg())
     okexWs.subscribe(Msg.Spot_Orderbook5_ETHUSD)
-    await asyncio.sleep(6)
-
+    await asyncio.sleep(3)
+    okexWs.unsubscribe(Msg.Spot_Orderbook5_ETHUSD)
+    await asyncio.sleep(3)
+    print("And again")
+    #Messages from previos subscription getted
+    okexWs.subscribe(Msg.Spot_Orderbook5_ETHUSD)
+    await asyncio.sleep(3)
+    okexWs.unsubscribe(Msg.Spot_Orderbook5_ETHUSD)
+    await asyncio.sleep(3)
 
 #works only 10 seconds
 if __name__ == "__main__":

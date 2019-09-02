@@ -30,4 +30,5 @@ class Msg:
          except Exception as e:
              print(e)
 
-    Spot_Orderbook5_ETHUSD = ["spot/depth5:ETH-USDT"]
+    Spot_Orderbook5_ETHUSD = "spot/depth5:ETH-USDT"
+
